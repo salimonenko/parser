@@ -13,8 +13,8 @@ include_once 'parser_engine.php';
 <!doctype html>
 <html>
 <head>
-    <title>Парсер  4846d.ru</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Парсер </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <!--meta name="robots" content="noindex,nofollow"-->
 
 <style>

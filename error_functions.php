@@ -31,6 +31,3 @@ function run_time_html($time_start) {
         echo "<!--p>Время работы: " . (time() - $time_start) . "</p-->\n";
 }
 
-
-
-

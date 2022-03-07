@@ -1,8 +1,5 @@
 <?php
 
-//phpinfo();
-//die();
-
 
 //if(!defined('flag_perfom_working') || (flag_perfom_working != 'parsing')) {die("Access forbidden: ". basename(__FILE__));}
 
@@ -24,7 +21,7 @@ $site_url = "";
  $charset = "";    // Исходная кодировка страницы
 $uni_name = date("d-m-Y-H-i-s", time());
 
-/* --- 1.1 --- Переопределяем переменные на основе GET или POST параметров */
+/* --- Переопределяем переменные на основе GET или POST параметров */
 if(isset($_REQUEST['site_url'])){
     $site_url = trim($_REQUEST['site_url']);
 }
@@ -40,19 +37,19 @@ if(!function_exists('http_response_code')){
 
 
 
-/* --- 2 --- Получение контента из каталога site */
+/* --- Получение контента из каталога site */
 if($action) { // При отправке данных из формы после нажатия кнопки Старт
     if(!empty($site_url)) {
         $site_url = trim($site_url);
 
         $proto =  parse_url($site_url, PHP_URL_SCHEME);
         $domen = parse_url($site_url, PHP_URL_HOST);
-            if(strtolower(substr($domen, 0, 4)) === 'www.'){
+            if(strtolower(substr($domen, 0, 4)) === 'www.'){ // Убираем www.
                 $domen = substr($domen, 4);
             }
 
 
-        $res_arr = get_site_price($site_url, $proto, $domen);
+        $res_arr = get_site_html($site_url, $proto, $domen);
 
         $price_list = $res_arr['price_list'];
         $error_page = $res_arr['error_page'];
@@ -70,7 +67,7 @@ if($action) { // При отправке данных из формы после
         $domen = substr($domen, 4);
     }
 
-    $res_arr = get_site_price($site_url, $proto, $domen);
+    $res_arr = get_site_html($site_url, $proto, $domen);
 
  }
 
@@ -79,8 +76,8 @@ if($action) { // При отправке данных из формы после
 
 
 
-/* --- 1.3 --- Парсинг цены */
-function get_site_price($site_url, $proto, $domen) {
+/* --- Парсинг страницы */
+function get_site_html($site_url, $proto, $domen) {
 
     function cript($str){
 //        $str = base64_encode($str);
@@ -97,7 +94,7 @@ function get_site_price($site_url, $proto, $domen) {
     $FLAG_change = $_REQUEST['FLAG_change'];
 
 
-    if(!preg_match("|^http:\/\/|", $site_url)){
+    if(!preg_match("|^https?:\/\/|", $site_url)){
         $site_url = $proto. '://'.$base_domen. $site_url;
     }
 
@@ -117,9 +114,7 @@ function get_site_price($site_url, $proto, $domen) {
         $this_FILE = substr(__FILE__, strlen($_SERVER['DOCUMENT_ROOT']));
         $this_FILE = str_replace('\\', '/', $this_FILE);
 
-
-
-        $base_domen_to_change = $_SERVER['HTTP_HOST']. $this_FILE. '?URL='. $proto. '://' .$base_domen;
+//        $base_domen_to_change = $_SERVER['HTTP_HOST']. $this_FILE. '?URL='. $proto. '://' .$base_domen;
         $base_domen_to_change = $_SERVER['HTTP_HOST']. $this_dir. "/base_url.php/?proto=". $proto. '&domen='.$domen. '&resourse=';
 
         if(strtolower(substr($base_domen_to_change, 0, 4)) === 'www.'){
@@ -159,20 +154,39 @@ function get_site_price($site_url, $proto, $domen) {
 // Делаем замену
         $page = preg_replace("|(<link\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change. '$2', $page); // link абсолютный-href
 
+        $reg_href = "|(<link[^>]*?)href\s*=\s*\"/([/\w\-а-яА-Я.]*?)\"([^>]*?>)|i";
+        $page = preg_replace($reg_href, '$1'. 'href="'. ''.$base_domen_to_change . '$2'. '"'. '$3' , $page); // link:  href от корня сайта
 
-            $page = preg_replace("|(<a\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change_a . '$2', $page); // a
+
+            $page = preg_replace("|(<a\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change_a . '$2', $page); // a-абсолютные
+
+            $reg_href = "|(<a[^>]*?)href\s*=\s*\"/([/\w\-а-яА-Я.]*?)\"([^>]*?>)|i";
+            $page = preg_replace($reg_href, '$1'. 'href="'.$proto . '://'.$base_domen_to_change_a . '/$2'. '"'. '$3' , $page); // a:  href от корня сайта
 
 
+        $page = preg_replace("|(<script\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change. '$2', $page); // script - абсолютный src
 
-        $page = preg_replace("|(<script\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change. '$2', $page); // script
-        $page = preg_replace("|(<img\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change. '$2', $page); // img
+        $page = preg_replace("|(<img\s[^>]*?)". preg_quote($base_domen). "([^>]*?>)|", '$1'. $base_domen_to_change. '$2', $page); // img - абсолютный src
 
+            $reg_src = "|src\s*=\s*\"/([/\w\-а-яА-Я.?&]*?)\"|i";
+            $page = preg_replace($reg_src, 'src="'. $proto. '://'.$base_domen_to_change . '/$1'. '"', $page); //  src от корня сайта
+
+
+//preg_match_all($reg_src, $page, $matches, PREG_PATTERN_ORDER);
+//print_r($matches);
+//die();
+
+
+/*  Запросы с этих ресурсов перенаправляем на пустую функцию  */
         $page = preg_replace("|(https?:\/\/)([\w]+\.)*". preg_quote('yandex.'). "[\w]+|i", 'http://'. $base_domen_to_change_null. '', $page); // Убираем ссылки на yandex
         $page = preg_replace("|(https?:\/\/)([\w]+\.)*". preg_quote('google.'). "[\w]+|i", 'http://'. $base_domen_to_change_null. '', $page); // Убираем ссылки на google
 
+            $page = preg_replace("|(https?:\/\/)([\w]+\.)*". preg_quote('youtube.'). "[\w]+|i", 'http://'. $base_domen_to_change_null. '', $page); // Убираем Ютуб
+
+
         echo $page;
 
-//        file_put_contents('results.html', $page );
+//        file_put_contents('results.html', $page ); // Сохраняем страницу в файл
 
         }elseif ($FLAG_change === 'NO'){
             echo $page;

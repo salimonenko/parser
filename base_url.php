@@ -3,13 +3,10 @@
 require_once 'curl_get_contents.php';
 require_once 'error_functions.php';
 
-if(!function_exists('http_response_code')){
+if(!function_exists('http_response_code')){ // Там находится эмуляция функций, которых нет в РНР5.3
     require_once 'functions_PHP5_3/http_response_code.php';
 }
 
-
-
-// echo 'QUERY_STRING='. $_SERVER['QUERY_STRING']. ' PATH_INFO='. $_SERVER['PATH_INFO']. ' ';
 
 if(isset($_REQUEST['proto']) && (strlen($_REQUEST['proto']) < 10)){
     $proto = $_REQUEST['proto'];
@@ -29,21 +26,21 @@ if(isset($_REQUEST['resourse']) && (strlen($_REQUEST['resourse']) < 300)){
     $resourse = '';
 }
 
-// Если значения $_REQUEST['proto'] (и т.д.) - неправильные или пустые, пытаемся разобрать PATH_INFO
+// Если значения $_REQUEST['proto'] (и т.д.) - неправильные или пустые, тогда пытаемся разобрать PATH_INFO
 if($proto === ''){
 
     if(isset($_SERVER['PATH_INFO']) && (strlen($_SERVER['PATH_INFO'] < 300))){
 
-    $PATH_INFO_Arr = explode('/', $_SERVER['PATH_INFO']);
+        $PATH_INFO_Arr = explode('/', $_SERVER['PATH_INFO']);
 
-    $proto = $PATH_INFO_Arr[1];
-    $domen = $PATH_INFO_Arr[2];
-    $resourse = $PATH_INFO_Arr[3];
-    }else{
-        http_response_code(413); // Устанавливаем код ответа Bad request: на сервере, с которого производится парсинг, нет такого файла или он недоступен
-        echo '$_SERVER[\'PATH_INFO\'] is not existed or too long';
-        die('');
-    }
+        $proto = $PATH_INFO_Arr[1];
+        $domen = $PATH_INFO_Arr[2];
+        $resourse = $PATH_INFO_Arr[3];
+        }else{
+            http_response_code(413); // Устанавливаем код ответа Bad request: на сервере, с которого производится парсинг, нет такого файла или он недоступен
+            echo '$_SERVER[\'PATH_INFO\'] is not existed or too long';
+            die();
+        }
  }
 
 if(substr($resourse, 0, 1) == '/'){
@@ -52,10 +49,7 @@ if(substr($resourse, 0, 1) == '/'){
 
 $proto_domen = $proto. '://'. $domen;
 
-
 $site_url = $proto_domen. '/' .$resourse;
-// die($site_url);
-
 
 
 $flag_header = 0;

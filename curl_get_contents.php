@@ -1,6 +1,6 @@
 <?php
 
-/* --- 1.2 --- Загрузка страницы при помощи cURL */
+/* --- Загрузка страницы при помощи cURL */
 function curl_get_contents($page_url, $base_domen, $pause_time, $retry, $flag_header) {
     /*
     $page_url - адрес страницы-источника
@@ -24,7 +24,6 @@ $headers = array(
 'accept-encoding: deflate, br',
 'accept-language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
 );
-
 
 
 
